@@ -9,7 +9,7 @@ This agent uses the A* Algorithm for path finding and a very crude method for de
 
 1. Head over to the [Dungeon and Data Structures Repo](https://github.com/gocoderone/dungeons-and-data-structures) to download and install a copy of the latest game.
 2. Clone this repo.
-3. Run `coderone-dungeon --interactive arx_ii-13`, where arx_ii-13 is the directory of this repo.
+3. Run `coderone-dungeon --interactive arx_ii-13`, where `arx_ii-13` is the directory of this repo.
 
 ## Notes
 
