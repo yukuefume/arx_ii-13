@@ -1,5 +1,5 @@
-from . import my_agent
+from . import arx_ii_13
 
 
 def agent():
-    return my_agent.Agent()
+    return arx_ii_13.Agent()

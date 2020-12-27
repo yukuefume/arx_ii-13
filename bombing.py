@@ -1,9 +1,54 @@
 import logging
 
+from .helpers import Score
+from .helpers import nearest_neighbour
+
 
 class B1:
-    def __init__(self, game_state) -> None:
-        self.gs = game_state
+    def __init__(self, gs) -> None:
+        self.gs = gs
+        self.blocks = gs.soft_blocks + gs.ore_blocks
+
+    @property
+    def target_sites(self) -> list:
+        score = []
+
+        for block in self.blocks:
+            wood_cnt = 0.0
+            ore_cnt = 0.0
+            is_accessible = False
+            bombing_sites = []
+
+            # Get surrounding blocks
+            adjacent_blocks = nearest_neighbour(self.gs, block, {'sb', 'ob', 't', 'a'})
+
+            # Count surrounding block type
+            for adjacent_block in adjacent_blocks:
+                location = list(adjacent_block.keys())[0]
+                entity = self.gs.entity_at(location)
+                if entity == 'sb':
+                    wood_cnt += 1
+                elif entity == 'ob':
+                    ore_cnt += 1
+
+                if not is_accessible and not self.gs.is_occupied(location):
+                    is_accessible = True
+                    # Ensure bombing sites have a safe exit
+                    exit_1 = self.get_surrounding_tiles(location)
+                    exit_2 = self.get_surrounding_tiles(location, radius=2)
+
+                    if exit_1 and exit_2:
+                        bombing_sites.append(location)
+
+            if is_accessible:
+                score.append(Score(block, self.score(wood_cnt, ore_cnt), bombing_sites))
+
+        if score:
+            score.sort(key=lambda s: s.score, reverse=True)
+        return score
+
+    def score(self, wood: float, ore: float) -> float:
+        return wood * 0.5 + ore
 
     def blast_zone(self):
         blast_zone = []
