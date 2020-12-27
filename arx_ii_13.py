@@ -15,8 +15,13 @@ As it has been seriously damaged in the battlefield, it's self-defence mechanism
 only injures or kills it's opponents by chance, while its primary focus is on mining and survival.
 '''
 
-import random
 import logging
+import random
+
+
+from .bombing import B1
+from .helpers import find_closest_obj
+from .path_finder import find_path
 
 
 class Agent:
@@ -27,8 +32,6 @@ class Agent:
 
     def next_move(self, game_state, player_state):
         action = ''
-        # Create path finder object each turn as game_state or player_state may change
-        pf = PathFinder(game_state, player_state)
         b1 = B1(game_state)
 
         if len(game_state.bombs) > 0:
@@ -41,7 +44,7 @@ class Agent:
                     safe_zones = b1.safe_zone(player_state.location, blast_zone)
                     logging.info(f'Safe zones found {safe_zones}')
                     for safe_zone in safe_zones:
-                        path = pf.find_path(safe_zone)
+                        path = find_path(player_state.location, safe_zone, game_state)
                         if path:
                             logging.info(f'Moving to safe zone: {safe_zone}')
                             self.evasive_actions = ['', '']
@@ -61,14 +64,13 @@ class Agent:
         # We have bombs plant em'
         elif player_state.ammo > 0:
             # Get possible bomb sites
-            bombing = Bombing(pf, b1)
-            ranked_target_sites = bombing.target_sites
+            ranked_target_sites = b1.target_sites
             logging.info(f'Targets: {ranked_target_sites}')
             # Find a viable bombing spot
             path = []
             for target_site in ranked_target_sites:
                 for site in target_site.b_sites:
-                    path = pf.find_path(site)
+                    path = find_path(player_state.location, site, game_state)
                     if path:
                         logging.info(f'Planting bomb at {site}')
                         logging.info(f'Path to bomb site {path[0].show_path}')
@@ -81,7 +83,7 @@ class Agent:
                     self.planned_actions.append(p.action)
         else:
             target = game_state.treasure + game_state.ammo
-            closest_target = pf.find_closest_obj(player_state.location, target)
+            closest_target = find_closest_obj(player_state.location, target)
 
             if target:
                 random_target = random.choice(target)
@@ -92,13 +94,13 @@ class Agent:
                     entity = 'ammo'
                 logging.info(f'Picking up {entity}')
                 logging.info(f'Finding path for {closest_target}')
-                path = pf.find_path(closest_target)
+                path = find_path(player_state.location, closest_target, game_state)
                 if path:
                     logging.info(f'Path found (closest): {path[0].show_path}')
                     for p in path:
                         self.planned_actions.append(p.action)
                 else:
-                    path = pf.find_path(random_target)
+                    path = find_path(player_state.location, random_target, game_state)
                     logging.info(f'Path found (random): {path[0].show_path}')
                     for p in path:
                         self.planned_actions.append(p.action)

@@ -1,3 +1,5 @@
+from dataclasses import dataclass
+
 from scipy.spatial import distance
 
 
@@ -60,3 +62,55 @@ class Node:
                 f"f: {self.f}, "
                 f"g: {self.g}, "
                 f"h: {self.h}")
+
+
+@dataclass
+class Score:
+    block_pos: tuple
+    score: float
+    b_sites: list
+
+
+def find_closest_obj(player_location: tuple, list_of_coord: list) -> tuple:
+    """Find the closest object relative to the player
+
+    Args:
+        player_location (tuple): current coordinates of the player (x,y)
+        list_of_coord (list): list of tuples containing all coordinates to check
+
+    Returns:
+        tuple: closes coordinate relative to the players location
+    """
+    # Check if objects are avaliable on the map
+    if list_of_coord:
+        obj_location = dict()
+
+        for loc in list_of_coord:
+            obj_location[loc] = distance.euclidean(player_location, loc)
+
+        return min(obj_location, key=obj_location.get)
+    else:
+        return ()
+
+
+def nearest_neighbour(gs, location: tuple, search_list: set) -> list:
+    x, y = location
+
+    # Generate points of closest neighbour
+    neighbours = [{(x-1, y): 'l'}, {(x+1, y): 'r'}, {(x, y-1): 'd'}, {(x, y+1): 'u'}]
+
+    # Remove obstacle from the array and check boundry
+    valid_neighbours = list()
+    for neighbour in neighbours:
+        for coord, action in neighbour.items():
+            # Check coordinate is in bounds
+            if gs.is_in_bounds(coord):
+                if gs.is_occupied(coord):
+                    # TODO: avoid bomb radius
+                    if gs.entity_at(coord) in search_list:
+                        valid_neighbours.append({coord: action})
+                # Is in bounds and nothing is occupying the space
+                else:
+                    valid_neighbours.append({coord: action})
+
+    return valid_neighbours
